@@ -312,7 +312,7 @@ function command.loadnode()
         end
         node_list[v.node] = v
     end
-    print("loadnode")
+    -- print(string.format("loadnode %s", print_r(node_list, true)))
 end
 
 local function xpcall_ret(ok, ...)
