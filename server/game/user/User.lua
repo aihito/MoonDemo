@@ -17,7 +17,6 @@ local state = { ---内存中的状态
 local User = {}
 function User.Load(req)
     local function fn()
-
         local data = scripts.UserModel.Get()
         if data then
             return data
@@ -67,7 +66,7 @@ function User.Load(req)
 end
 
 function User.Login(req)
-    if req.pull then--服务器主动拉起玩家
+    if req.pull then --服务器主动拉起玩家
         return scripts.UserModel.Get().openid
     end
     if state.online then
@@ -103,7 +102,7 @@ function User.Offline()
     print(context.uid, "offline")
     state.online = false
 
-	if state.ismatching then
+    if state.ismatching then
         state.ismatching = false
         context.SEND("center_scripts").Center.UnMatch(context.uid)
     end
@@ -143,20 +142,20 @@ function User.C2SMatch()
 
     state.ismatching = true
     --向匹配服务器请求
-    local ok, err  = context.CALL("center_scripts").Center.Match(context.uid, moon.id)
+    local ok, err    = context.CALL("center_scripts").Center.Match(context.uid, moon.id)
     if not ok then
         state.ismatching = false
         moon.error(err)
         return
     end
-    context.S2C(CmdCode.S2CMatch,{res=true})
+    context.S2C(CmdCode.S2CMatch, { res = true })
 end
 
 function User.MatchSuccess(addr_room, roomid)
     state.ismatching = false
     context.addr_room = addr_room
     state.roomid = roomid
-    context.S2C(CmdCode.S2CMatchSuccess,{res=true})
+    context.S2C(CmdCode.S2CMatchSuccess, { res = true })
 end
 
 --房间一局结束
@@ -165,7 +164,7 @@ function User.GameOver(score)
     local data = scripts.UserModel.MutGet()
     data.score = data.score + score
     context.addr_room = 0
-    context.S2C(CmdCode.S2CGameOver,{score=score})
+    context.S2C(CmdCode.S2CGameOver, { score = score })
 end
 
 function User.AddScore(count)

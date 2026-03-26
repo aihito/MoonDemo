@@ -92,7 +92,6 @@ moon.raw_dispatch("S2C", function(msg)
     if type(uid) == "number" then
         local c = context.uid_map[uid]
         if not c then
-
             buffer.delete(buf)
             buf = nil
             return

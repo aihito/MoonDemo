@@ -17,7 +17,6 @@ local DBData
 local UserModel = {}
 
 function UserModel.Create(data)
-
     if DBData then
         return DBData
     end
