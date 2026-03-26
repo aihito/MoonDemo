@@ -10,6 +10,8 @@ local context ={
 
 setup(context)
 
+print(string.format("node context %s", print_r(context, true)))
+
 moon.shutdown(function()
     moon.quit()
 end)

@@ -32,7 +32,7 @@ function Room.Init(roomid)
     end)
 
     scripts.Aoi.init_map(conf.map.x, conf.map.y, conf.map.size)
-    for i=1,500 do
+    for i = 1, 500 do
         local food = Room.CreateFood()
         scripts.Aoi.insert(food.id, food.x, food.y, 0, false)
     end
@@ -52,17 +52,17 @@ function Room.FindPlayer(uid)
 end
 
 function Room.CreatePlayer(uid, req)
-    local p = {id = uid, name = req.name, score = 0}
+    local p = { id = uid, name = req.name, score = 0 }
     p.x = math.random(conf.map.x, conf.map.x + conf.map.size)
     p.y = math.random(conf.map.y, conf.map.y + conf.map.size)
 
-    p.dir = {x = p.x, y = p.y}
+    p.dir = { x = p.x, y = p.y }
 
     vector2.normalize(p.dir)
 
     p.speed = conf.speed
     p.radius = conf.radius
-    p.spriteid = math.random(1,6)
+    p.spriteid = math.random(1, 6)
     p.movetime = moon.now()
     p.eat_count = 0
     MemModel.players[uid] = p
@@ -80,7 +80,7 @@ function Room.CreateFood()
     food.x = math.random(conf.map.x, conf.map.x + conf.map.size)
     food.y = math.random(conf.map.y, conf.map.y + conf.map.size)
     food.radius = conf.food_radius
-    food.spriteid = math.random(1,12)
+    food.spriteid = math.random(1, 12)
     MemModel.foods[food.id] = food
     return food
 end
@@ -108,7 +108,7 @@ function Room.GetAllPlayer()
 end
 
 function Room.C2SEnterRoom(uid, req)
-    context.S2C(uid, CmdCode.S2CEnterRoom, {id = uid, time = moon.now()})
+    context.S2C(uid, CmdCode.S2CEnterRoom, { id = uid, time = moon.now() })
     local player = Room.FindPlayer(uid)
     if not player then
         player = Room.CreatePlayer(uid, req)
@@ -119,7 +119,7 @@ end
 
 function Room.UpdatePos(player)
     local now = moon.now()
-    local delta = (now - player.movetime)/1000
+    local delta = (now - player.movetime) / 1000
     player.movetime = now
 
     local dir = player.dir
@@ -150,15 +150,21 @@ function Room.C2SMove(uid, req)
     local player = Room.UpdateDir(uid, req)
 
     scripts.Aoi.fireEvent(uid, GameDef.AoiEvent.UpdateDir, function(watchers)
-        moon.raw_send("S2C", context.addr_gate, protocol.encode(watchers, CmdCode.S2CMove,{
-            id = uid,
-            x = player.x,
-            y = player.y,
-            dirx = player.dir.x,
-            diry = player.dir.y,
-            movetime = player.movetime
-            }
-            ), 0)
+        moon.raw_send(
+            "S2C",
+            context.addr_gate, protocol.encode(
+                watchers,
+                CmdCode.S2CMove, {
+                    id = uid,
+                    x = player.x,
+                    y = player.y,
+                    dirx = player.dir.x,
+                    diry = player.dir.y,
+                    movetime = player.movetime
+                }
+            ),
+            0
+        )
     end)
 end
 
@@ -194,14 +200,14 @@ function Room.Update()
                 assert(entity, tostring(id))
 
                 if not entity.dead then
-                    local distance = math.sqrt((player.x - entity.x)^2 + (player.y - entity.y)^2 )
+                    local distance = math.sqrt((player.x - entity.x) ^ 2 + (player.y - entity.y) ^ 2)
                     if distance < (player.radius + entity.radius) then
                         if player.radius > entity.radius then
                             entity.dead = true
                             table.insert(dead, id)
                             player.score = player.score + 1
                             player.eat_count = player.eat_count + 1
-                            player.radius = conf.radius + (0.05*player.eat_count)
+                            player.radius = conf.radius + (0.05 * player.eat_count)
                         end
                     end
                 end
@@ -209,10 +215,10 @@ function Room.Update()
 
             if player.radius ~= radius then
                 scripts.Aoi.fireEvent(player.id, GameDef.AoiEvent.UpdateRadius, function(watchers)
-                    moon.raw_send("S2C", context.addr_gate, protocol.encode(watchers, CmdCode.S2CUpdateRadius,{
+                    moon.raw_send("S2C", context.addr_gate, protocol.encode(watchers, CmdCode.S2CUpdateRadius, {
                         id = player.id,
                         radius = player.radius
-                        }
+                    }
                     ), 0)
                 end)
             end
@@ -221,10 +227,10 @@ function Room.Update()
 
     local deadcount = #dead
 
-    for _,id in ipairs(dead) do
+    for _, id in ipairs(dead) do
         scripts.Aoi.erase(id)
         if uuid.isuid(id) then
-            context.S2C(id, "S2CDead",{id=id})
+            context.S2C(id, "S2CDead", { id = id })
             Room.RemovePlayer(id)
         else
             Room.RemoveFood(id)
@@ -232,7 +238,7 @@ function Room.Update()
     end
 
     if deadcount > 0 then
-        for i=1,deadcount do
+        for i = 1, deadcount do
             local food = Room.CreateFood()
             scripts.Aoi.insert(food.id, food.x, food.y, 0, false)
         end

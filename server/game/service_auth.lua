@@ -14,6 +14,9 @@ local context = {
 
 local command = setup(context)
 
+print(string.format("auth context %s", print_r(context, true)))
+print(string.format("auth command %s", print_r(command, true)))
+
 ---@diagnostic disable-next-line: duplicate-set-field
 command.hotfix = function(names)
     for _,u in pairs(context.uid_map) do

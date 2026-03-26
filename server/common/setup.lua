@@ -48,6 +48,8 @@ local function load_scripts(context, sname)
         local fn
         local content = moon.env(file)
         if content then
+            -- 第二个参数是 Lua chunkname，用于在错误栈/调试信息里定位脚本来源。
+            -- 这里前缀 '@' 通常会让栈追踪把该 chunkname 当作“文件名”展示。
             fn = load(content, "@" .. file)
         else
             fn = assert(loadfile(file))
