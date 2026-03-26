@@ -50,7 +50,7 @@ local function load_scripts(context, sname)
         if content then
             -- 第二个参数是 Lua chunkname，用于在错误栈/调试信息里定位脚本来源。
             -- 这里前缀 '@' 通常会让栈追踪把该 chunkname 当作“文件名”展示。
-            fn = load(content, "@" .. file)
+            fn = assert(load(content, "@" .. file))
         else
             fn = assert(loadfile(file))
         end
@@ -101,6 +101,16 @@ local function start_hour_timer(context)
     end)
 end
 
+-- Dynamic proxy cache for SEND/CALL wrappers.
+-- Weak cache (__mode="kv") means wrappers can be GC'ed when no longer referenced elsewhere,
+-- while still allowing reuse to reduce allocations.
+--
+-- Example:
+--   context.SEND("center_scripts").Center.Match(uid, addr)
+--     => moon.send("lua", context.addr_center, "Center.Match", uid, addr)
+--
+--   local ok, err = context.CALL("auth_scripts").Auth.Login(req)
+--     => moon.call("lua", context.addr_auth, "Auth.Login", req)
 local dynamic_send_wrap = setmetatable({}, { __mode = "kv" })
 local dynamic_call_wrap = setmetatable({}, { __mode = "kv" })
 local function wrap_send_or_call(who, is_send)
