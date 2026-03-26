@@ -24,6 +24,7 @@ local socket = require("moon.socket")
 local common = require("common")
 
 local GameDef = common.GameDef
+local GameCfg = common.GameCfg
 
 local arg = moon.args()
 
@@ -47,7 +48,14 @@ local services = {
         threadid = 1,
         url = serverconf.CLUSTER_ETC_URL,
         etc_path = "/conf.cluster?node=%s"
-    }
+    },
+    {
+        unique = true,
+        name = "sharetable",
+        file = "moon/service/sharetable.lua",
+        dir = "static/table",
+        threadid = 2
+    },
 }
 
 local worker_count = math.tointeger(moon.env("THREAD_NUM"))
@@ -80,6 +88,15 @@ moon.async(function()
     end
 
     moon.async(function()
+        GameCfg.Load()
+
+        for k, v in pairs(GameCfg) do
+            print(string.format("GameCfg.constant %s %s", k, v))
+        end
+
+        print_r(GameCfg.constant)
+        print(string.format("GameCfg.constant robot_num %s", GameCfg.constant.robot_num))
+
         local host, port = selfnode.host:match("([^:]+):?(%d*)$")
         port = math.tointeger(port) or 80
 
@@ -102,5 +119,18 @@ moon.async(function()
 end)
 
 moon.shutdown(function()
-    moon.quit()
+    moon.async(
+        function()
+            while true do
+                local size = moon.server_stats("service.count")
+                if size == 2 then
+                    break
+                end
+                moon.sleep(200)
+                print("bootstrap wait all service quit, now count:", size)
+            end
+            moon.kill(moon.queryservice("sharetable"))
+            moon.quit()
+        end
+    )
 end)
