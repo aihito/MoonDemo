@@ -43,11 +43,11 @@ function Hello.Start()
             local bt = moon.clock()
             for i = 1, 10000 do
                 --moon.call("lua", 0xB000001, "Hello.DoSometing2", 1)
-                context.call_user(1099780325378, "Hello.DoSometing2", 1)
+                context.call_user(1099788713986, "Hello.DoSometing2", 1)
             end
             local et = moon.clock()
             print("call_user_v2 cost time:", et - bt)
-            print_r(context.call_user(1099780325378, "Hello.DoSometing2", 1))
+            print_r(context.call_user(1099788713986, "Hello.DoSometing2", 1))
         end
     end)
 end

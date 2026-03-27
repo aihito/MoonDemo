@@ -4,7 +4,8 @@ if _G["__init__"] then
     return {
         thread = 16,
         enable_stdout = true,
-        logfile = string.format("log/game-%s-%s.log", arg[1], os.date("%Y-%m-%d-%H-%M-%S")),
+        -- logfile = string.format("log/game-%s-%s.log", arg[1], os.date("%Y-%m-%d-%H-%M-%S")),
+        logfile = string.format("log/game-%s.log", arg[1]),
         loglevel = "DEBUG",
         path = table.concat({
             "./?.lua",

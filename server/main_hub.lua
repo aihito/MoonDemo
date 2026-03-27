@@ -4,7 +4,8 @@ if _G["__init__"] then
     return {
         thread = 8,
         enable_stdout = (arg[3] ~= "hide"),
-        logfile = string.format("log/hub-%s-%s.log", arg[1], os.date("%Y-%m-%d-%H-%M-%S")),
+        -- logfile = string.format("log/hub-%s-%s.log", arg[1], os.date("%Y-%m-%d-%H-%M-%S")),
+        logfile = string.format("log/hub-%s.log", arg[1]),
         loglevel = arg[4] or "DEBUG",
         path = table.concat({
             "./?.lua",
