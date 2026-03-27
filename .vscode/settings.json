@@ -1,0 +1,27 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "clangd.arguments": [
+        "-log=info",
+        "-pretty",
+        "--background-index",
+        "-compile-commands-dir=${workspaceFolder}/server/moon",
+        "-completion-style=detailed",
+        "--header-insertion=never",
+        "-j=6",
+    ],
+    "clangd.onConfigChanged": "restart",
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "xaver.clang-format",
+    "clang-format.executable": "/usr/sbin/clang-format",
+    "clangd.path": "/usr/sbin/clangd",
+    "editor.inlayHints.enabled": "off",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "files.associations": {
+        "*.ipp": "cpp"
+    },
+    "[lua]": {
+        "editor.defaultFormatter": "sumneko.lua"
+    }
+}
+
+

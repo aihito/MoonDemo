@@ -86,34 +86,37 @@ socket.on("message", on_message)
 
 socket.on("close", on_close)
 
-moon.raw_dispatch("S2C", function(msg)
-    local buf = moon.decode(msg, "L")
-    local uid = seri.unpack_one(buf, true)
-    if type(uid) == "number" then
-        local c = context.uid_map[uid]
-        if not c then
-            buffer.delete(buf)
-            buf = nil
-            return
-        end
+moon.raw_dispatch(
+    "S2C",
+    function(msg)
+        local buf = moon.decode(msg, "L")
+        local uid = seri.unpack_one(buf, true)
+        if type(uid) == "number" then
+            local c = context.uid_map[uid]
+            if not c then
+                buffer.delete(buf)
+                buf = nil
+                return
+            end
 
-        socket.write(c.fd, buf)
-        if moon.DEBUG() then
-            protocol.print_message(uid, buf)
-        end
-    else
-        local p = buffer.to_shared(buf)
-        for _, one in ipairs(uid) do
-            local c = context.uid_map[one]
-            if c then
-                socket.write(c.fd, p)
-                if moon.DEBUG() then
-                    protocol.print_message(one, buf)
+            socket.write(c.fd, buf)
+            if moon.DEBUG() then
+                protocol.print_message(uid, buf)
+            end
+        else
+            local p = buffer.to_shared(buf)
+            for _, one in ipairs(uid) do
+                local c = context.uid_map[one]
+                if c then
+                    socket.write(c.fd, p)
+                    if moon.DEBUG() then
+                        protocol.print_message(one, buf)
+                    end
                 end
             end
         end
     end
-end)
+)
 
 moon.raw_dispatch("SBC", function(msg)
     local buf = moon.decode(msg, "L")

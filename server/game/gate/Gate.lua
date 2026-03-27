@@ -17,15 +17,15 @@ end
 function Gate.Start()
     ---开始接收客户端网络链接
 
-    listenfd  = socket.listen(context.conf.host, context.conf.port, moon.PTYPE_SOCKET_MOON)
-    ws_listenfd  = socket.listen(context.conf.host, context.conf.port+1, moon.PTYPE_SOCKET_WS)
+    listenfd    = socket.listen(context.conf.host, context.conf.port, moon.PTYPE_SOCKET_MOON)
+    ws_listenfd = socket.listen(context.conf.host, context.conf.port + 1, moon.PTYPE_SOCKET_WS)
 
-    assert(listenfd>0,"server listen failed")
-    assert(ws_listenfd>0,"server listen websocket failed")
+    assert(listenfd > 0, "server listen failed")
+    assert(ws_listenfd > 0, "server listen websocket failed")
     socket.start(listenfd)
     socket.start(ws_listenfd)
-    print("GAME Server Start Listen TCP",context.conf.host, context.conf.port)
-    print("GAME Server Start Listen Websocket", string.format("ws://%s:%d", context.conf.host, context.conf.port+1))
+    print("GAME Server Start Listen TCP", context.conf.host, context.conf.port)
+    print("GAME Server Start Listen Websocket", string.format("ws://%s:%d", context.conf.host, context.conf.port + 1))
     return true
 end
 
@@ -43,7 +43,7 @@ end
 
 function Gate.Kick(uid, fd, ignore_socket_event)
     print("gate kick", uid, fd, ignore_socket_event)
-    if uid and uid >0 then
+    if uid and uid > 0 then
         local c = context.uid_map[uid]
         if c then
             socket.close(c.fd)
@@ -54,7 +54,7 @@ function Gate.Kick(uid, fd, ignore_socket_event)
         end
     end
 
-    if fd and fd>0 then
+    if fd and fd > 0 then
         socket.close(fd)
     end
     return true
@@ -80,7 +80,7 @@ function Gate.BindUser(req)
     context.fd_map[req.fd] = c
     context.uid_map[req.uid] = c
     context.auth_watch[req.fd] = nil
-    print(string.format("BindUser fd:%d uid:%d serviceid:%08X", req.fd, req.uid,  req.addr_user))
+    print(string.format("BindUser fd:%d uid:%d serviceid:%08X", req.fd, req.uid, req.addr_user))
     return true
 end
 
