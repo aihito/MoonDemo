@@ -3,12 +3,11 @@ import "common.proto";
 
 message C2SMailList
 {
-
 }
 
 message S2CMailList
 {
-    map<int64,MailData> mail_list = 1;
+    map<int64, MailData> mail_list = 1;
 }
 
 message S2CUpdateMail

@@ -118,13 +118,16 @@ moon.raw_dispatch(
     end
 )
 
-moon.raw_dispatch("SBC", function(msg)
-    local buf = moon.decode(msg, "L")
-    local p = buffer.to_shared(buf)
-    for uid, c in pairs(context.uid_map) do
-        socket.write(c.fd, p)
-        if moon.DEBUG() then
-            protocol.print_message(uid, buf)
+moon.raw_dispatch(
+    "SBC",
+    function(msg)
+        local buf = moon.decode(msg, "L")
+        local p = buffer.to_shared(buf)
+        for uid, c in pairs(context.uid_map) do
+            socket.write(c.fd, p)
+            if moon.DEBUG() then
+                protocol.print_message(uid, buf)
+            end
         end
     end
-end)
+)
