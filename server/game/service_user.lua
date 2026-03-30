@@ -48,29 +48,32 @@ local function forward(msg, msgname)
     redirect(msg, address, PTYPE_C2S)
 end
 
-moon.raw_dispatch("C2S",function(msg)
-    local buf = moon.decode(msg, "B")
-    local msgname = id_to_name(bunpack(buf, "<H"))
-    if not command[msgname] then
-        wfront(buf, seri.packs(context.uid))
-        forward(msg, msgname)
-    else
-        local cmd, data = mdecode(buf)
-        local fn = command[cmd]
-        moon.async(function()
-            local ok, res = xpcall(fn, debug.traceback, data)
-            if not ok then
-                moon.error(res)
-                context.S2C(CmdCode.S2CErrorCode,{code = 1}) --server internal error
-            elseif res then
-                if type(res) ~= "number" then
-                    error(string.format("Expect number(error code) got boolean when handle message '%s'", cmd))
+moon.raw_dispatch(
+    "C2S",
+    function(msg)
+        local buf = moon.decode(msg, "B")
+        local msgname = id_to_name(bunpack(buf, "<H"))
+        if not command[msgname] then
+            wfront(buf, seri.packs(context.uid))
+            forward(msg, msgname)
+        else
+            local cmd, data = mdecode(buf)
+            local fn = command[cmd]
+            moon.async(function()
+                local ok, res = xpcall(fn, debug.traceback, data)
+                if not ok then
+                    moon.error(res)
+                    context.S2C(CmdCode.S2CErrorCode, { code = 1 }) --server internal error
+                elseif res then
+                    if type(res) ~= "number" then
+                        error(string.format("Expect number(error code) got boolean when handle message '%s'", cmd))
+                    end
+                    context.S2C(CmdCode.S2CErrorCode, { code = res })
                 end
-                context.S2C(CmdCode.S2CErrorCode,{code = res})
-            end
-        end)
+            end)
+        end
     end
-end)
+)
 
 context.addr_gate = moon.queryservice("gate")
 context.addr_db_user = moon.queryservice("db_user")
@@ -89,9 +92,9 @@ moon.shutdown(function()
     --- rewrite default behavior: Avoid automatic service exits
 end)
 
----垃圾收集器间歇率控制着收集器需要在开启新的循环前要等待多久。 
+---垃圾收集器间歇率控制着收集器需要在开启新的循环前要等待多久。
 ---增大这个值会减少收集器的积极性。
----当这个值比 100 小的时候，收集器在开启新的循环前不会有等待。 
+---当这个值比 100 小的时候，收集器在开启新的循环前不会有等待。
 ---设置这个值为 200 就会让收集器等到总内存使用量达到 之前的两倍时才开始新的循环。
 ---params: 垃圾收集器间歇率, 垃圾收集器步进倍率, 垃圾收集器单次运行步长“大小”
-collectgarbage("incremental",120)
+collectgarbage("incremental", 120)

@@ -27,14 +27,17 @@ end
 function Hello.Start()
     scripts.Item.AddItem(10001, 1, 1)
 
-    local ok, err = context.CALL("mail_scripts").Mail.AddMail(context.uid, {
-        mail_key = "hello_mail",
-        flag = 0,
-        rewards = {
-            { id = 10001, count = 1 },
-            { id = 10002, count = 2 },
-        },
-    })
+    local ok, err = context.CALL("mail_scripts").Mail.AddMail(
+        context.uid,
+        {
+            mail_key = "hello_mail",
+            flag = 0,
+            rewards = {
+                { id = 10001, count = 1 },
+                { id = 10002, count = 2 },
+            },
+        }
+    )
     assert(ok, err)
 
     moon.async(function()

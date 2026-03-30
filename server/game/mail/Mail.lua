@@ -2,21 +2,23 @@ local moon = require "moon"
 local uuid = require "uuid"
 local coqueue = require "moon.queue"
 local common = require "common"
-local GameDef= common.GameDef
+local GameDef = common.GameDef
 local Database = common.Database
-local GameCfg = common.GameCfg --游戏配置
+local GameCfg = common.GameCfg     --游戏配置
 local ErrorCode = common.ErrorCode --逻辑错误码
-local CmdCode = common.CmdCode --客户端通信消息码
+local CmdCode = common.CmdCode     --客户端通信消息码
 
 ---@type mail_context
 local context = ...
 local scripts = context.scripts ---方便访问同服务的其它lua模块
 
-local UserMailLock = setmetatable({},{__index =  function (t, k)
-    local v = coqueue()
-    t[k] = v
-    return v
-end})
+local UserMailLock = setmetatable({}, {
+    __index = function(t, k)
+        local v = coqueue()
+        t[k] = v
+        return v
+    end
+})
 
 local UserMailList = {}
 
@@ -41,7 +43,7 @@ function Mail.Load(uid, system)
         return {}, ErrorCode.OperationNotPermit
     end
 
-    local scope_lock<close> = lock()
+    local scope_lock <close> = lock()
     local maillist = Database.LoadUserMail(context.addr_db_user, uid)
     if not maillist then
         return {}, ErrorCode.ServerInternalError
@@ -83,13 +85,13 @@ end
 ---@param mail MailData
 function Mail.UpdateMail(uid, mail)
     Database.SaveUserMail(context.addr_db_user, uid, mail.id, mail)
-    context.S2C(uid, CmdCode.S2CUpdateMail, {mail_list = {mail}})
+    context.S2C(uid, CmdCode.S2CUpdateMail, { mail_list = { mail } })
 end
 
 ---@param uid integer
 ---@param maillist MailData[]
 function Mail.UpdateMailList(uid, maillist)
-    context.S2C(uid, CmdCode.S2CUpdateMail, {mail_list = maillist})
+    context.S2C(uid, CmdCode.S2CUpdateMail, { mail_list = maillist })
 end
 
 ---@param uid integer
@@ -99,7 +101,7 @@ function Mail.C2SMailList(uid, req)
     if ec then
         return ec
     end
-    context.S2C(uid, CmdCode.S2CMailList, {mail_list = maillist})
+    context.S2C(uid, CmdCode.S2CMailList, { mail_list = maillist })
 end
 
 ---@param uid integer
@@ -156,11 +158,11 @@ function Mail.C2SMailReward(uid, req)
                 mail.flag = mail.flag | GameDef.MailFlag.Taked
                 if mail.rewards then
                     for _, reward in ipairs(mail.rewards) do
-                        itemList[#itemList+1] = reward
+                        itemList[#itemList + 1] = reward
                     end
                 end
             end
-            updateList[#updateList+1] = mail
+            updateList[#updateList + 1] = mail
         end
     end
 
@@ -204,8 +206,8 @@ function Mail.C2SMailDel(uid, req)
         local mail = maillist[value]
         if mail then
             mail.flag = mail.flag | GameDef.MailFlag.Read
-            if (mail.flag & GameDef.MailFlag.Read)>0 and ((mail.flag & GameDef.MailFlag.Taked) > 0 or (mail.flag & GameDef.MailFlag.ShowOnly) > 0) then
-                delList[#delList+1] = mail.id
+            if (mail.flag & GameDef.MailFlag.Read) > 0 and ((mail.flag & GameDef.MailFlag.Taked) > 0 or (mail.flag & GameDef.MailFlag.ShowOnly) > 0) then
+                delList[#delList + 1] = mail.id
                 maillist[value] = nil
             end
         else
@@ -215,7 +217,7 @@ function Mail.C2SMailDel(uid, req)
 
     if #delList > 0 then
         Database.DelUserMail(context.addr_db_user, uid, delList)
-        context.S2C(uid, CmdCode.S2CMailDel, {mail_id_list = delList})
+        context.S2C(uid, CmdCode.S2CMailDel, { mail_id_list = delList })
     end
 end
 

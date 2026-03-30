@@ -8,6 +8,7 @@
         "-completion-style=detailed",
         "--header-insertion=never",
         "-j=6",
+        "--clang-tidy=false"
     ],
     "clangd.onConfigChanged": "restart",
     "editor.formatOnSave": false,

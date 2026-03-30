@@ -11,7 +11,7 @@ message AuthUser
     string openid = 2;     //
     int64 uid = 3;         // 玩家uid
     int64 logouttime = 4;  // 玩家登出时间,0表示在线
-    bool online = 5;       //@是否在线
+    bool online = 5;       // @是否在线
 }
 
 message UserData
