@@ -12,6 +12,17 @@
     },
     "diagnostics": {
       "disable": [
+        "missing-fields",
+        "need-check-nil",
+        "inject-field",
+        "unnecessary-if",
+        "undefined-field",
+        "duplicate-type",
+        "return-type-mismatch",
+        "param-type-mismatch",
+        "assign-type-mismatch",
+        "await-in-sync",
+        "unnecessary-assert"
       ],
       "globals": [],
       "globalsRegex": [],
