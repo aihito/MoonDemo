@@ -80,7 +80,7 @@ function _M.saveuser(addr_db, userid, data)
 end
 
 if moon.queryservice("db_game") > 0 then
-        ---async
+    ---async
     ---@param db integer
     ---@param uid integer
     ---@return UserData?
@@ -121,15 +121,15 @@ if moon.queryservice("db_game") > 0 then
 end
 
 function _M.LoadUserMail(addr_db, uid)
-    local res, err = redis_call(addr_db, "HGETALL", "mail_"..uid)
+    local res, err = redis_call(addr_db, "HGETALL", "mail_" .. uid)
     if err then
         moon.error("LoadUserMail failed ", uid, err)
         return false
     end
     local maillist = {}
-    assert(#res%2==0, tostring(uid))
-    for i=1,#res,2 do
-        local mail = json.decode(res[i+1])
+    assert(#res % 2 == 0, tostring(uid))
+    for i = 1, #res, 2 do
+        local mail = json.decode(res[i + 1])
         maillist[tonumber(res[i])] = mail
     end
     return maillist
@@ -140,14 +140,14 @@ end
 ---@param mailId integer
 ---@param mail MailData
 function _M.SaveUserMail(addr_db, uid, mailId, mail)
-    redis_send(addr_db, "HSET", "mail_"..uid, mailId, json.encode(mail))
+    redis_send(addr_db, "HSET", "mail_" .. uid, mailId, json.encode(mail))
 end
 
 ---@param addr_db integer
 ---@param uid integer
 ---@param mailIdList integer[]
 function _M.DelUserMail(addr_db, uid, mailIdList)
-    redis_send(addr_db, "HDEL", "mail_"..uid, table.unpack(mailIdList))
+    redis_send(addr_db, "HDEL", "mail_" .. uid, table.unpack(mailIdList))
 end
 
 return _M
