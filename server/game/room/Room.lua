@@ -27,9 +27,12 @@ local Room = {}
 function Room.Init(roomid)
     MemModel.roomid = roomid
 
-    moon.timeout(GameCfg.constant.room.round_time * 1000, function()
-        Room.GameOver()
-    end)
+    moon.timeout(
+        GameCfg.constant.room.round_time * 1000,
+        function()
+            Room.GameOver()
+        end
+    )
 
     scripts.Aoi.init_map(conf.map.x, conf.map.y, conf.map.size)
     for i = 1, 500 do
