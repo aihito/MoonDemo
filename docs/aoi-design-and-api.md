@@ -54,6 +54,46 @@ tile 中只保存指向 `objects_` 内部对象的指针。
 
 > 注意：`objects_` rehash 会使内部对象地址变化。该实现将对象指针缓存到 tile 中，因此 **隐含要求** `objects_` 的元素地址在使用期间保持稳定或 rehash 不发生。实际工程中通常通过提前 reserve/控制增长来避免 rehash 导致指针失效；若未处理，属于潜在风险点。
 
+### 2.3 Watcher 如何“观察”、Marker 变化如何“通知”
+
+这份 AOI 的核心不是“watcher 主动扫描”，而是 **watcher 先把自己登记到覆盖的 tile 上，后续 marker/watcher 变化时 AOI 主动产出事件**。
+
+#### 2.3.1 Watcher 的观察机制（watch 注册）
+
+watcher 有一个视野矩形（中心点 `x,y`，宽高 `w,h`）：
+
+1. 计算 watcher 视野覆盖的 tile 范围 `tile_rect = make_tile_rect(x, y, w, h)`
+2. 对 `tile_rect` 覆盖的每个 tile：
+   - 将 watcher 指针放入该 tile 的 `watchers` 集合
+3. 同时对这些 tile 的 marker 做 enter/leave 判定（insert 时为“初始 enter”，update 时做“差量 enter/leave”）
+
+因此 watcher 的“观察列表”隐式由 **(watcher 覆盖的 tile 集合)** 决定。
+
+#### 2.3.2 Marker 变化时 watcher 如何得知（事件产生）
+
+AOI 在以下变化点会主动生成事件到 `event_queue_`：
+
+- **marker insert**：marker 加入某 tile（或 range-marker 加入多个 tile）时，遍历该 tile 的 `watchers`，对每个 watcher 的视野矩形做 `contains(marker.x, marker.y)` 判断，满足则产生 `event_enter`。
+- **marker erase**：marker 从 tile 移除时（且开启 leave），遍历该 tile 的 `watchers`，产生 `event_leave`。
+- **marker update（跨 tile）**：marker 移动导致 tile 变化时，等价于“从旧 tile erase + 向新 tile insert”，因此会触发 leave/enter。
+
+一句话：**marker 的插入/移除/跨 tile 移动 = 通过 tile.watchers 通知所有可能受影响的 watcher**。
+
+#### 2.3.3 Watcher 变化时可见集如何更新（差量）
+
+watcher update 时会计算 old/new 覆盖范围与视野矩形：
+
+- 对“旧覆盖但新不覆盖”的 tile：从 tile.watchers 移除该 watcher，并对 marker 做 leave 判定
+- 对“新覆盖但旧不覆盖”的 tile：加入 tile.watchers，并对 marker 做 enter 判定
+- 对“重叠区域”的 tile：尽量跳过重复扫描，只对边缘差量做计算（这是 `update` 中较复杂的分支目的）
+
+#### 2.3.4 事件如何被 Lua 消费（`update_event`）
+
+AOI 的 enter/leave/自定义事件都会先进入 `event_queue_`，Lua 侧通过 `update_event(event_cache)` 拉取：
+
+- 每条事件是三元组：`(watcher, marker, eventid)`
+- 事件不会自动清空：一般由 Lua 每次 insert/update/erase/fire_event 后立刻 `update_event` 消费（本项目 `Aoi.lua` 就是这么做的）
+
 ## 3. 坐标到 tile 的映射
 
 - `get_tile_x(v)` / `get_tile_y(v)`：将坐标映射到 tile 索引，并在越界时 clamp 到 `[0, count_-1]`。
@@ -183,6 +223,55 @@ tile 中只保存指向 `objects_` 内部对象的指针。
 - `has_object(handle)`：是否存在该对象
 - `find(handle)`：返回对象指针（找不到返回 null）
 - `for_each_all(handler, filter)`：遍历所有 tiles，把符合 filter 的 watcher/marker 交给 handler
+
+### 5.8 Lua 绑定补充：`update_event(event_cache_table) -> integer`
+
+> 这是 **Lua 层使用 AOI 的关键接口**，在 `server/game/room/Aoi.lua` 中通过 `space:update_event(event_cache)` 消费 C++ 侧累积的 enter/leave/自定义事件。
+
+来源：
+
+- C++ AOI 事件队列：`aoi.hpp` 的 `event_queue_`
+- Lua 绑定实现：`server/moon/src/lualib-src/lua_aoi.cpp` 的 `laoi_update_event`
+
+#### 5.8.1 入参/返回
+
+- **入参**：一个 Lua table（作为输出缓存数组），例如 `event_cache = {}`
+- **返回**：写入到 table 的 **元素个数**（不是事件条数）
+  - 若有 `N` 条事件，返回值是 `N * 3`
+  - 若无事件，返回 `0`
+
+#### 5.8.2 写入格式（三元组数组）
+
+`update_event(t)` 会把每条事件按顺序写入 `t`：
+
+- `t[i]   = watcher_handle`
+- `t[i+1] = marker_handle`
+- `t[i+2] = eventid`（enter/leave 或业务自定义 eventid）
+
+因此 Lua 层通常按步长 3 遍历：
+
+```lua
+local n = space:update_event(event_cache)
+for i = 1, n, 3 do
+  local watcher = event_cache[i]
+  local marker  = event_cache[i + 1]
+  local eventid = event_cache[i + 2]
+  -- 处理 enter/leave/其它事件
+end
+```
+
+#### 5.8.3 事件从哪里来（与 clear_event 的关系）
+
+Lua 绑定中以下调用会 **先 clear_event 再产生新事件**（见 `lua_aoi.cpp`）：
+
+- `space:insert(...)`
+- `space:update(...)`
+- `space:erase(...)`
+- `space:fire_event(...)`
+
+这意味着：每次调用上述 API 后，你应该尽快调用一次 `update_event` 把本次产生的事件“取走”，否则下一次 AOI 操作会清空旧事件。
+
+> 这也解释了 `Aoi.lua` 里 `insert/update/erase/fireEvent` 都会立刻调用 `update_aoi_event()` 的原因：保证 enter/leave 事件不会被覆盖。
 
 ## 6. 复杂度与适用场景（直观理解）
 
