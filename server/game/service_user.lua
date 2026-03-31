@@ -33,6 +33,8 @@ local context = {
 
 local command = setup(context, "user")
 
+print(string.format("service_user start context: %s", print_r(context, true)))
+
 local function forward(msg, msgname)
     local address
     local v = fwd_addr[msgname]
@@ -51,12 +53,12 @@ end
 moon.raw_dispatch(
     "C2S",
     function(msg)
-        local buf = moon.decode(msg, "B")
-        local msgname = id_to_name(bunpack(buf, "<H"))
-        if not command[msgname] then
+        local buf = moon.decode(msg, "B")              -- C2S 协议包格式：前 2 字节是 CmdCode（小端 uint16），后续是 json payload。
+        local msgname = id_to_name(bunpack(buf, "<H")) -- 根据 CmdCode 反查消息名（例如 "C2SMatch" / "C2SMailList"）。
+        if not command[msgname] then                   -- 该消息不由 user 服务本地处理：补上 uid 前缀后转发到目标服务（由 CmdCode.forward 路由）。
             wfront(buf, seri.packs(context.uid))
             forward(msg, msgname)
-        else
+        else -- 本地可处理：解码并分发到对应的 user 脚本函数。
             local cmd, data = mdecode(buf)
             local fn = command[cmd]
             moon.async(function()

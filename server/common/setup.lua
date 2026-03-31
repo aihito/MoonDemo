@@ -150,12 +150,12 @@ local function _internal(context)
     ---@field addr_mail integer
     local base_context = context
 
-    ---@alias services 
-    --- | gate_scripts 
-    --- | auth_scripts 
-    --- | user_scripts 
-    --- | center_scripts 
-    --- | room_scripts 
+    ---@alias services
+    --- | gate_scripts
+    --- | auth_scripts
+    --- | user_scripts
+    --- | center_scripts
+    --- | room_scripts
     --- | mail_scripts
 
     --- Create a dynamic proxy for sending messages to a service (fire-and-forget).
@@ -353,29 +353,32 @@ return function(context, sname)
 
     load_scripts(context, sname)
 
-    moon.dispatch("lua", function(sender, session, cmd, ...)
-        profile.start()
-        local fn = command[cmd]
-        if fn then
-            if session ~= 0 then
-                raw_send("lua", sender, xpcall_ret(xpcall(fn, traceback, ...)), session)
+    moon.dispatch(
+        "lua",
+        function(sender, session, cmd, ...)
+            profile.start()
+            local fn = command[cmd]
+            if fn then
+                if session ~= 0 then
+                    raw_send("lua", sender, xpcall_ret(xpcall(fn, traceback, ...)), session)
+                else
+                    fn(...)
+                end
             else
-                fn(...)
+                moon.error(moon.name, "recv unknown cmd " .. tostring(cmd))
+                if session ~= 0 then
+                    raw_send("lua", sender, xpcall_ret(false, moon.name .. " recv unknown cmd " .. tostring(cmd)), session)
+                end
             end
-        else
-            moon.error(moon.name, "recv unknown cmd " .. tostring(cmd))
-            if session ~= 0 then
-                raw_send("lua", sender, xpcall_ret(false, moon.name .. " recv unknown cmd " .. tostring(cmd)), session)
+            local v = profiler_record[cmd]
+            if not v then
+                v = { count = 0, cost = 0 }
+                profiler_record[cmd] = v
             end
+            v.count = v.count + 1
+            v.cost = v.cost + profile.stop()
         end
-        local v = profiler_record[cmd]
-        if not v then
-            v = { count = 0, cost = 0 }
-            profiler_record[cmd] = v
-        end
-        v.count = v.count + 1
-        v.cost = v.cost + profile.stop()
-    end)
+    )
 
     moon.register_protocol({
         name = "C2S",

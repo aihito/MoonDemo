@@ -149,23 +149,27 @@ function Room.C2SMove(uid, req)
     --print(moon.now(), mt, p.x, p.y)
     local player = Room.UpdateDir(uid, req)
 
-    scripts.Aoi.fireEvent(uid, GameDef.AoiEvent.UpdateDir, function(watchers)
-        moon.raw_send(
-            "S2C",
-            context.addr_gate, protocol.encode(
-                watchers,
-                CmdCode.S2CMove, {
-                    id = uid,
-                    x = player.x,
-                    y = player.y,
-                    dirx = player.dir.x,
-                    diry = player.dir.y,
-                    movetime = player.movetime
-                }
-            ),
-            0
-        )
-    end)
+    scripts.Aoi.fireEvent(
+        uid,
+        GameDef.AoiEvent.UpdateDir,
+        function(watchers)
+            moon.raw_send(
+                "S2C",
+                context.addr_gate, protocol.encode(
+                    watchers,
+                    CmdCode.S2CMove, {
+                        id = uid,
+                        x = player.x,
+                        y = player.y,
+                        dirx = player.dir.x,
+                        diry = player.dir.y,
+                        movetime = player.movetime
+                    }
+                ),
+                0
+            )
+        end
+    )
 end
 
 function Room.LeaveRoom(uid)
@@ -213,14 +217,26 @@ function Room.Update()
                 end
             end
 
-            if player.radius ~= radius then
-                scripts.Aoi.fireEvent(player.id, GameDef.AoiEvent.UpdateRadius, function(watchers)
-                    moon.raw_send("S2C", context.addr_gate, protocol.encode(watchers, CmdCode.S2CUpdateRadius, {
-                        id = player.id,
-                        radius = player.radius
-                    }
-                    ), 0)
-                end)
+            if player.radius ~= radius then -- 当玩家半径发生变化时，通知AOI系统更新玩家半径
+                scripts.Aoi.fireEvent(
+                    player.id,
+                    GameDef.AoiEvent.UpdateRadius,
+                    function(watchers)
+                        moon.raw_send(
+                            "S2C",
+                            context.addr_gate,
+                            protocol.encode(
+                                watchers,
+                                CmdCode.S2CUpdateRadius,
+                                {
+                                    id = player.id,
+                                    radius = player.radius
+                                }
+                            ),
+                            0
+                        )
+                    end
+                )
             end
         end
     end

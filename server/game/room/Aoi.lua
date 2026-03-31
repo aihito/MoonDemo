@@ -22,10 +22,10 @@ local event_cache = {}
 local function update_aoi_event(fn)
     local count = space:update_event(event_cache)
     local watchers
-	for i=1,count,3 do
+    for i = 1, count, 3 do
         local watcher = event_cache[i]
-        local marker = event_cache[i+1]
-		local eventid = event_cache[i+2]
+        local marker = event_cache[i + 1]
+        local eventid = event_cache[i + 2]
         if eventid == EVENT_ENTER then
             Aoi.enter(watcher, marker)
         elseif eventid == EVENT_LEAVE then
@@ -34,9 +34,9 @@ local function update_aoi_event(fn)
             if not watchers then
                 watchers = {}
             end
-            watchers[#watchers+1] = watcher
-		end
-	end
+            watchers[#watchers + 1] = watcher
+        end
+    end
 
     if watchers and next(watchers) then
         fn(watchers)
@@ -81,8 +81,8 @@ end
 function Aoi.query(x, y, view_w, view_h)
     x = math.floor(x)
     y = math.floor(y)
-    view_w = 2*math.ceil(view_w)
-    view_h = 2*math.ceil(view_h)
+    view_w = 2 * math.ceil(view_w)
+    view_h = 2 * math.ceil(view_h)
     local out = {}
     space:query(x, y, view_w, view_h, out)
     return out
@@ -97,7 +97,7 @@ function Aoi.enter(watcher, marker)
 end
 
 function Aoi.leave(watcher, marker)
-    context.S2C(watcher, CmdCode.S2CLeaveView, {id = marker})
+    context.S2C(watcher, CmdCode.S2CLeaveView, { id = marker })
 end
 
 return Aoi

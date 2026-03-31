@@ -10,16 +10,16 @@ local context = ...
 local conf = context.conf
 
 local room_conf = {
-    name="room",
-    file="game/service_room.lua",
-    map ={
+    name = "room",
+    file = "game/service_room.lua",
+    map = {
         x = -64,
         y = -64,
         size = 128
     },
     speed = 2,
-    radius = 16/100,
-    food_radius = 15/100,
+    radius = 16 / 100,
+    food_radius = 15 / 100,
 }
 
 local room_name = room_conf.name
@@ -28,10 +28,10 @@ local rooms = {}
 
 --简单的匹配策略
 local function CheckMatchQueue(q)
-    local max_player_number =  GameCfg.constant.room.max_player_number
+    local max_player_number = GameCfg.constant.room.max_player_number
     if #q >= max_player_number then
         local roomid = uuid.next(GameDef.TypeRoom)
-        room_conf.name = room_name..roomid
+        room_conf.name = room_name .. roomid
         room_conf.time = conf.time
         room_conf.id = roomid
         local addr_room = moon.new_service(room_conf)
@@ -42,8 +42,8 @@ local function CheckMatchQueue(q)
         assert(moon.call("lua", addr_room, "Init", roomid))
         rooms[addr_room] = roomid
         local n = 0
-        while n< max_player_number do
-            local uid = table.remove(q,1)
+        while n < max_player_number do
+            local uid = table.remove(q, 1)
             local p = context.match_map[uid]
             if p then
                 context.try_send_user(uid, "User.MatchSuccess", addr_room, roomid)
@@ -69,7 +69,7 @@ function CMD.Match(uid, address)
     --print("MATCH", uid, address)
     local v = context.match_map[uid]
     if not v then
-        context.match_map[uid] = {address = address}
+        context.match_map[uid] = { address = address }
         table.insert(context.match_queue, uid)
         CheckMatchQueue(context.match_queue)
     end
